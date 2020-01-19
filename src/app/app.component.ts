@@ -1,35 +1,64 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import {map} from 'rxjs/operators'
+import { post } from './post.model';
+import {PostServiceService} from './post-service.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css']
 })
-export class AppComponent implements OnInit {
-  loadedPosts = [];
+export class AppComponent implements OnInit, OnDestroy {
+  errorMessage:string=null;
+  loadedPosts:post[] = [];
+  isFetching:boolean=false;
+  errorMsgSubsOnCreatePost:Subscription;
+  constructor(private http: HttpClient, private servicePost:PostServiceService) {}
 
-  constructor(private http: HttpClient) {}
+  ngOnInit() {
+    this.onFetchPosts();
+    this.errorMsgSubsOnCreatePost=this.servicePost.error.subscribe((errorMsg)=>{
+      this.errorMessage=errorMsg;
+    })
+  }
 
-  ngOnInit() {}
-
-  onCreatePost(postData: { title: string; content: string }) {
+  onCreatePost(title:string, content:string) {
     // Send Http request
-    this.http
-      .post(
-        'https://ng-complete-guide-c56d3.firebaseio.com/posts.json',
-        postData
-      )
-      .subscribe(responseData => {
-        console.log(responseData);
-      });
+    this.loadedPosts=this.servicePost.createAndStorePosts(title, content);
   }
 
   onFetchPosts() {
+    this.isFetching=true;
     // Send Http request
+    this.servicePost.fetchPosts(). subscribe(
+      post =>{
+        this.isFetching=false;
+        this.loadedPosts=post;
+      },
+      error =>{
+        this.isFetching=false;
+        this.errorMessage=error.message;
+      }
+    )
   }
 
   onClearPosts() {
     // Send Http request
+    this.servicePost.deletePosts().subscribe(
+      ()=>{
+        this.loadedPosts=[];
+      }
+    )
   }
+
+  handleError(){
+    this.errorMessage=null;
+  }
+
+  ngOnDestroy(){
+    this.errorMsgSubsOnCreatePost.unsubscribe();
+  }
+ 
 }

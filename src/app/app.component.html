@@ -1,7 +1,7 @@
 <div class="container">
   <div class="row">
     <div class="col-xs-12 col-md-6 col-md-offset-3">
-      <form #postForm="ngForm" (ngSubmit)="onCreatePost(postForm.value)">
+      <form #postForm="ngForm" (ngSubmit)="onCreatePost(postForm.value.title, postForm.value.content)">
         <div class="form-group">
           <label for="title">Title</label>
           <input
@@ -42,7 +42,7 @@
       |
       <button
         class="btn btn-danger"
-        [disabled]="loadedPosts.length < 1"
+        [disabled]="loadedPosts==null"
         (click)="onClearPosts()"
       >
         Clear Posts
@@ -51,7 +51,23 @@
   </div>
   <div class="row">
     <div class="col-xs-12 col-md-6 col-md-offset-3">
-      <p>No posts available!</p>
-    </div>
+      <p *ngIf="loadedPosts==null && isFetching===false;">No posts available!</p>
+      <ul  class="list-group" *ngIf="loadedPosts!==null && isFetching===false && errorMessage==null">
+        <li class="list-group-item" *ngFor="let lp of loadedPosts">
+          <h3>{{lp.title}}</h3>
+          <p>{{lp.content}}</p>
+        </li>
+      </ul>
+      <p *ngIf="isFetching===true && errorMessage==null">Loading...</p>
+      <div class="alert alert-danger" role="alert" *ngIf="errorMessage!=null">
+            <h3>An Error Occurred!</h3>
+            <p>{{errorMessage}}</p>
+            <button class="btn btn-danger" (click)="handleError();" type="button">
+              OK
+            </button>
+      </div>
+
+     </div>
   </div>
 </div>
+
